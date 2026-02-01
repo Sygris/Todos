@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
 
 
 class UserPublic(BaseModel):
-    id: str
+    id: int
     email: EmailStr
     nickname: str | None = None
 
