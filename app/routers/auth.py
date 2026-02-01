@@ -3,9 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models.user import User as UserDB
-from app.schemas.user import UserCreate, UserPublic
+from app.schemas.user import UserCreate, UserLogin, UserPublic
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,3 +26,17 @@ def signup(signupData: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
 
     return user
+
+
+@router.post("/login")
+def login(loginData: UserLogin, db: Session = Depends(get_db)):
+    stmt = select(UserDB).where(UserDB.email == loginData.email)
+    existing_user = db.execute(stmt).scalar_one_or_none()
+
+    if not existing_user:
+        raise HTTPException(status_code=401, detail="Wrong credentials")
+
+    if not verify_password(loginData.password, existing_user.password):
+        raise HTTPException(status_code=401, detail="Wrong credentials")
+
+    return {"login": "ok"}
