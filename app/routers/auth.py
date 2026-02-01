@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.security import hash_password
 from app.models.user import User as UserDB
 from app.schemas.user import UserCreate, UserPublic
 
@@ -18,6 +19,7 @@ def signup(signupData: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail="Email already exists")
 
     user = UserDB(**signupData.model_dump())
+    user.password = hash_password(user.password)
 
     db.add(user)
     db.commit()
