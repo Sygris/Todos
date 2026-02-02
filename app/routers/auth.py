@@ -3,9 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password
+from app.core.security import create_token, hash_password, verify_password
 from app.models.user import User as UserDB
-from app.schemas.user import UserCreate, UserLogin, UserPublic
+from app.schemas.user import Token, UserCreate, UserLogin, UserPublic
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -28,7 +28,7 @@ def signup(signupData: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 def login(loginData: UserLogin, db: Session = Depends(get_db)):
     stmt = select(UserDB).where(UserDB.email == loginData.email)
     existing_user = db.execute(stmt).scalar_one_or_none()
@@ -39,4 +39,10 @@ def login(loginData: UserLogin, db: Session = Depends(get_db)):
     if not verify_password(loginData.password, existing_user.password):
         raise HTTPException(status_code=401, detail="Wrong credentials")
 
-    return {"login": "ok"}
+    access_token = create_token({"sub": str(existing_user.id)})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": "AHAHAHA",
+        "token_type": "bearer",
+    }
