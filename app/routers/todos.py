@@ -16,7 +16,7 @@ def create_todo(
     data: TodoCreate,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> TodoRead:
+) -> Todo:
     todo = Todo(**data.model_dump())
     todo.owner_id = current_user.id
 
@@ -50,7 +50,7 @@ def read_todo(
     todo_id: int,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> TodoRead:
+) -> Todo:
     todo = db.get(Todo, todo_id)
 
     if not todo:
@@ -68,7 +68,7 @@ def update_todo(
     todo_data: TodoUpdate,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> TodoRead:
+) -> Todo:
     todo = db.get(Todo, todo_id)
 
     if not todo:
