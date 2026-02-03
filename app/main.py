@@ -1,12 +1,9 @@
 from fastapi import Depends, FastAPI
 from contextlib import asynccontextmanager
 
-from sqlalchemy.orm import Session
-
-from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_role
 from app.schemas.user import UserPublic
-from app.models.user import User as UserDB
+from app.models.user import User as UserDB, ROLE
 from app.utils.init_db import create_tables
 from app.routers.auth import router as authRouter
 
@@ -32,3 +29,8 @@ def health():
 @app.get("/profile", response_model=UserPublic)
 def profile(current_user: UserDB = Depends(get_current_user)):
     return current_user
+
+
+@app.get("/admin", response_model=UserPublic)
+def admin_dashboard(admin: UserDB = Depends(require_role(ROLE.ADMIN))):
+    return admin

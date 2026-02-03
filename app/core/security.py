@@ -1,4 +1,5 @@
 import os
+import secrets
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from fastapi import Depends, HTTPException
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 
 from app.core.database import get_db
-from app.models.user import User as UserDB
+from app.models.user import ROLE, User as UserDB
 
 load_dotenv()
 
@@ -56,6 +57,10 @@ def read_token(token: str = Depends(oauth2)) -> dict:
         raise HTTPException(status_code=401, detail="Invalid Token")
 
 
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe(64)
+
+
 def get_current_user(
     token: dict = Depends(read_token), db: Session = Depends(get_db)
 ) -> UserDB:
@@ -70,3 +75,13 @@ def get_current_user(
         raise HTTPException(status_code=401)
 
     return user
+
+
+def require_role(required_role: ROLE):
+    def dependency(current_user: UserDB = Depends(get_current_user)) -> UserDB:
+        if current_user.role != required_role:
+            raise HTTPException(status_code=403, detail="Insufficient Permission")
+
+        return current_user
+
+    return dependency
