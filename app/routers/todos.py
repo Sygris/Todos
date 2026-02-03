@@ -16,7 +16,7 @@ def create_todo(
     data: TodoCreate,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> Todo:
+) -> TodoRead:
     todo = Todo(**data.model_dump())
     todo.owner_id = current_user.id
 
@@ -39,8 +39,10 @@ def list_todos(
     else:
         stmt = select(Todo).where(Todo.owner_id == current_user.id)
 
+    stmt = stmt.offset(skip).limit(limit)
     todos = db.execute(stmt).scalars().all()
-    return todos[skip : skip + limit]
+
+    return todos
 
 
 @router.get("/{todo_id}", response_model=TodoRead)
@@ -48,7 +50,7 @@ def read_todo(
     todo_id: int,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> Todo:
+) -> TodoRead:
     todo = db.get(Todo, todo_id)
 
     if not todo:
@@ -66,7 +68,7 @@ def update_todo(
     todo_data: TodoUpdate,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-) -> Todo:
+) -> TodoRead:
     todo = db.get(Todo, todo_id)
 
     if not todo:
@@ -75,7 +77,8 @@ def update_todo(
     if current_user.role != ROLE.ADMIN and current_user.id != todo.owner_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    todo.completed = True
+    for field, value in todo_data.model_dump(exclude_unset=True).items():
+        setattr(todo, field, value)
 
     db.commit()
     db.refresh(todo)
@@ -100,4 +103,4 @@ def delete_todo(
     db.delete(todo)
     db.commit()
 
-    return {"deleted", True}
+    return {"deleted": True}
