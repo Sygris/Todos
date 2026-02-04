@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, true
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -28,11 +28,12 @@ def create_todo(
 def list_todos(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
+    completed: bool = True,
     skip: int = 0,
     limit: int = 10,
 ):
     service = TodoService(TodoRepository(db))
-    return service.list_todos(current_user, skip, limit)
+    return service.list_todos(current_user, completed, skip, limit)
 
 
 @router.get("/{todo_id}", response_model=TodoRead)
