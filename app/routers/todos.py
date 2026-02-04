@@ -32,7 +32,7 @@ def list_todos(
     limit: int = 10,
 ):
     service = TodoService(TodoRepository(db))
-    return service.list_todos(current_user)
+    return service.list_todos(current_user, skip, limit)
 
 
 @router.get("/{todo_id}", response_model=TodoRead)

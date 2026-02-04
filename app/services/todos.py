@@ -13,10 +13,10 @@ class TodoService:
         todo.owner_id = user.id
         return self.repo.create(todo)
 
-    def list_todos(self, user: User) -> Sequence[Todo]:
+    def list_todos(self, user: User, skip: int, limit: int) -> Sequence[Todo]:
         if user.role == ROLE.ADMIN:
-            return self.repo.list_todos()
-        return self.repo.list_by_owner(user.id)
+            return self.repo.list_todos(skip, limit)
+        return self.repo.list_by_owner(user.id, skip, limit)
 
     def get_todo(self, todo_id: int, user: User) -> Todo:
         todo = self.repo.get_by_id(todo_id)

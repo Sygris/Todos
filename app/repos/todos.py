@@ -18,7 +18,7 @@ class TodoRepository:
     def get_by_id(self, todo_id: int) -> Todo | None:
         return self.db.get(Todo, todo_id)
 
-    def list_todos(self, skip: int = 0, limit: int = 10) -> Sequence[Todo]:
+    def list_todos(self, skip: int, limit: int) -> Sequence[Todo]:
         stmt = select(Todo).offset(skip).limit(limit)
         return self.db.execute(stmt).scalars().all()
 
