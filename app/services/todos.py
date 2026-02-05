@@ -5,6 +5,12 @@ from app.repos.todos import TodoRepository
 
 
 class TodoService:
+    ALLOWED_SORT_FIELDS = {
+        "created_at": Todo.created_at,
+        "title": Todo.title,
+        "completed": Todo.completed,
+    }
+
     def __init__(self, repo: TodoRepository):
         self.repo = repo
 
@@ -14,11 +20,25 @@ class TodoService:
         return self.repo.create(todo)
 
     def list_todos(
-        self, user: User, completed: bool | None, skip: int, limit: int
+        self,
+        user: User,
+        completed: bool | None,
+        sort_by: str,
+        order: str,
+        skip: int,
+        limit: int,
     ) -> Sequence[Todo]:
+        if sort_by not in self.ALLOWED_SORT_FIELDS:
+            raise ValueError("Invalid sort field")
+
+        sort_column = self.ALLOWED_SORT_FIELDS[sort_by]
+
+        if order not in ["asc", "desc"]:
+            raise ValueError("Invalid order")
+
         if user.role == ROLE.ADMIN:
-            return self.repo.list_todos(completed, skip, limit)
-        return self.repo.list_by_owner(user.id, completed, skip, limit)
+            return self.repo.list_todos(completed, sort_column, order, skip, limit)
+        return self.repo.list_by_owner(user.id, completed, sort_by, order, skip, limit)
 
     def get_todo(self, todo_id: int, user: User) -> Todo:
         todo = self.repo.get_by_id(todo_id)

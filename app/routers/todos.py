@@ -1,16 +1,13 @@
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, true
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.todo import Todo
-from app.models.user import User as UserDB, ROLE
+from app.models.user import User as UserDB
+from app.services.todos import TodoService
 from app.repos.todos import TodoRepository
 from app.schemas.todo import TodoCreate, TodoRead, TodoUpdate
-from app.repos.todos import TodoRepository
-from app.services.todos import TodoService
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
@@ -29,13 +26,15 @@ def create_todo(
 def list_todos(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-    completed: Optional[bool] = None,
-    skip: int = 0,
-    limit: int = 10,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    completed: bool | None = Query(None),
+    sort_by: str = Query("created_at"),
+    order: str = Query("desc", regex="^(asc|desc)$"),
 ):
     service = TodoService(TodoRepository(db))
 
-    return service.list_todos(current_user, completed, skip, limit)
+    return service.list_todos(current_user, completed, sort_by, order, skip, limit)
 
 
 @router.get("/{todo_id}", response_model=TodoRead)
