@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, true
 from sqlalchemy.orm import Session
@@ -28,11 +29,12 @@ def create_todo(
 def list_todos(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
-    completed: bool = True,
+    completed: Optional[bool] = None,
     skip: int = 0,
     limit: int = 10,
 ):
     service = TodoService(TodoRepository(db))
+
     return service.list_todos(current_user, completed, skip, limit)
 
 
@@ -59,21 +61,16 @@ def update_todo(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
 ) -> Todo:
-    todo = db.get(Todo, todo_id)
+    service = TodoService(TodoRepository(db))
 
-    if not todo:
+    try:
+        return service.update_todo(
+            todo_id, current_user, todo_data.model_dump(exclude_unset=True)
+        )
+    except ValueError:
         raise HTTPException(status_code=404, detail="Todo not found")
-
-    if current_user.role != ROLE.ADMIN and current_user.id != todo.owner_id:
+    except PermissionError:
         raise HTTPException(status_code=403, detail="Forbidden")
-
-    for field, value in todo_data.model_dump(exclude_unset=True).items():
-        setattr(todo, field, value)
-
-    db.commit()
-    db.refresh(todo)
-
-    return todo
 
 
 @router.delete("/{todo_id}")

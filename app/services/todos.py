@@ -14,7 +14,7 @@ class TodoService:
         return self.repo.create(todo)
 
     def list_todos(
-        self, user: User, completed: bool, skip: int, limit: int
+        self, user: User, completed: bool | None, skip: int, limit: int
     ) -> Sequence[Todo]:
         if user.role == ROLE.ADMIN:
             return self.repo.list_todos(completed, skip, limit)
@@ -30,6 +30,14 @@ class TodoService:
             raise PermissionError("Forbidden")
 
         return todo
+
+    def update_todo(self, todo_id: int, current_user: User, data: dict):
+        todo = self.get_todo(todo_id, current_user)
+
+        for field, value in data.items():
+            setattr(todo, field, value)
+
+        return self.repo.update(todo)
 
     def delete_todo(self, todo_id: int, user: User) -> None:
         todo = self.get_todo(todo_id, user)
