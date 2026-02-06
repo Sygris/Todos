@@ -12,7 +12,7 @@ from app.schemas.todo import TodoCreate, TodoRead, TodoUpdate
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
-@router.post("/", response_model=TodoRead)
+@router.post("/", response_model=TodoRead, status_code=201)
 def create_todo(
     data: TodoCreate,
     db: Session = Depends(get_db),
@@ -22,7 +22,7 @@ def create_todo(
     return service.create_todo(data, current_user)
 
 
-@router.get("/", response_model=list[TodoRead])
+@router.get("/", response_model=list[TodoRead], status_code=200)
 def list_todos(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
@@ -37,7 +37,7 @@ def list_todos(
     return service.list_todos(current_user, completed, sort_by, order, skip, limit)
 
 
-@router.get("/{todo_id}", response_model=TodoRead)
+@router.get("/{todo_id}", response_model=TodoRead, status_code=200)
 def read_todo(
     todo_id: int,
     db: Session = Depends(get_db),
@@ -53,7 +53,7 @@ def read_todo(
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-@router.patch("/{todo_id}", response_model=TodoRead)
+@router.patch("/{todo_id}", response_model=TodoRead, status_code=200)
 def update_todo(
     todo_id: int,
     todo_data: TodoUpdate,
@@ -72,7 +72,7 @@ def update_todo(
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-@router.delete("/{todo_id}")
+@router.delete("/{todo_id}", status_code=204)
 def delete_todo(
     todo_id: int,
     db: Session = Depends(get_db),

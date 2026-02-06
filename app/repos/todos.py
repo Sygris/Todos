@@ -9,10 +9,14 @@ class TodoRepository:
         self.db = db
 
     def create(self, todo: Todo) -> Todo:
-        self.db.add(todo)
-        self.db.commit()
-        self.db.refresh(todo)
+        try:
+            self.db.add(todo)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
 
+        self.db.refresh(todo)
         return todo
 
     def get_by_id(self, todo_id: int) -> Todo | None:
@@ -67,11 +71,18 @@ class TodoRepository:
         return self.db.execute(stmt).scalars().all()
 
     def update(self, todo: Todo) -> Todo:
-        self.db.commit()
-        self.db.refresh(todo)
+        try:
+            self.db.commit()
+            self.db.refresh(todo)
+        except Exception:
+            self.db.rollback()
+            raise
 
         return todo
 
     def delete(self, todo: Todo) -> None:
-        self.db.delete(todo)
-        self.db.commit()
+        try:
+            self.db.delete(todo)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
